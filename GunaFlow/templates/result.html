@@ -1,29 +1,72 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Your Guna Music Recommendation</title>
+    <title>Your GunaFlow Result</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .audio-player {
+            width: 20px;
+            height: 20px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .play-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #1db954;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 15px 0;
+        }
+
+        .play-btn:hover {
+            background-color: #14833b;
+        }
+    </style>
 </head>
 <body>
-    <h2>🌟 Your Guna Combination: <span style="color:darkgreen;">{{ guna_code }}</span></h2>
+    <h2>🧠 Your GunaFlow Result</h2>
 
-    <p><strong>Top Gunas:</strong></p>
+    <h3>🌀 Dominant Guna Combination: <span style="color:blue">{{ guna_code }}</span></h3>
+    <p><strong>Primary Guna:</strong> {{ top_two[0][0] }} — Score: {{ top_two[0][1]|round(2) }}</p>
+    <p><strong>Secondary Guna:</strong> {{ top_two[1][0] }} — Score: {{ top_two[1][1]|round(2) }}</p>
+    <p><em>{{ traits }}</em></p>
+
+    <h3>🎵 Recommended Song for You</h3>
+    <p><strong>{{ song.title }}</strong></p>
+
+    <!-- Hidden YouTube iframe -->
+    <div class="audio-player" id="audio-container">
+        <iframe id="audio-frame"
+            width="20" height="20"
+            src="{{ song.url | replace('watch?v=', 'embed/') }}?autoplay=1&mute=0&controls=0&modestbranding=1&rel=0&showinfo=0"
+            allow="autoplay"
+            frameborder="0">
+        </iframe>
+    </div>
+
+    <!-- Play Button -->
+    <button class="play-btn" onclick="playAudio()">▶️ Play Audio</button>
+
+    <h3>📊 Your Guna Breakdown</h3>
     <ul>
-        {% for guna, score in top_two %}
-            <li><strong>{{ guna }}</strong>: {{ score }}</li>
+        {% for guna, score in guna_scores.items() %}
+            <li><strong>{{ guna }}:</strong> {{ score|round(2) }}</li>
         {% endfor %}
     </ul>
 
-    <p><strong>Meaning of Your Guna State:</strong></p>
-    <p style="font-size: 1.1em;">{{ traits }}</p>
+    <br>
+    <a href="/">🔁 Take Again</a>
 
-    <hr>
-
-    <h3>🎵 Recommended Song for Your Mental State</h3>
-    <p><strong>{{ song.title }}</strong></p>
-    <iframe width="100%" height="315" src="{{ song.url }}" frameborder="0" allowfullscreen></iframe>
-
-    <br><br>
-    <a href="/">🔁 Take Test Again</a>
+    <script>
+        function playAudio() {
+            document.getElementById('audio-container').style.display = 'block';
+            const iframe = document.getElementById('audio-frame');
+            iframe.src += "&autoplay=1";
+        }
+    </script>
 </body>
 </html>
