@@ -1,22 +1,12 @@
 from flask import Flask, render_template, request
 import numpy as np
+import pandas as pd
+import random
+import os
 
 app = Flask(__name__)
 
-# Guna recommendation mapped to 9 combinations
-recommendations = {
-    "SS": {"title": "Kun Faya Kun – Pure Peace", "url": "https://www.youtube.com/embed/T94PHkuydcw"},
-    "SR": {"title": "Ilahi – Calm Yet Driven", "url": "https://www.youtube.com/embed/2akgW4duhNw"},
-    "ST": {"title": "Tera Yaar Hoon Main – Serenity with Depth", "url": "https://www.youtube.com/embed/MFZ94Agvp_4"},
-    "RS": {"title": "Zinda – Focused Action with Compassion", "url": "https://www.youtube.com/embed/hOW2KPLMvOQ"},
-    "RR": {"title": "Apna Time Aayega – Raw Energy", "url": "https://www.youtube.com/embed/xO7AfJbZQXM"},
-    "RT": {"title": "Kabira – Restless Mind, Seeking Depth", "url": "https://www.youtube.com/embed/pLUJdMCTw-w"},
-    "TS": {"title": "Tera Naam – Heavy But Hopeful", "url": "https://www.youtube.com/embed/_ylKbs48KW0"},
-    "TR": {"title": "Agar Tum Saath Ho – Melancholic Momentum", "url": "https://www.youtube.com/embed/oD2-49dEaD4"},
-    "TT": {"title": "Channa Mereya – Deep Stillness", "url": "https://www.youtube.com/embed/gvyUuxdRdR4"}
-}
-
-# Meaningful description for each guna combination
+# 🧠 Traits for each guna combination
 guna_traits = {
     "SS": "High clarity and calm. Ideal for focus, meditation, and self-awareness.",
     "SR": "Peaceful and ambitious. You balance action with purpose.",
@@ -36,30 +26,29 @@ def home():
 @app.route('/result', methods=['POST'])
 def result():
     try:
-        # Get first 12 psychological responses
-        guna_responses = np.array([int(request.form[f'q{i}']) for i in range(1, 13)]).reshape(12, 1)
+        # ✅ Extract responses for guna calculation (Q1–Q12)
+        guna_responses = np.array([
+            int(request.form[f'q{i}']) for i in range(1, 13)
+        ]).reshape(12, 1)
 
-        # Guna matrix (S, R, T)
+        # 🔢 Matrix to calculate Sattva, Rajas, Tamas scores
         guna_matrix = np.array([
-            [1, 0, 0],  # Q1 - S
-            [1, 0, 0],  # Q2 - S
-            [0, 1, 0],  # Q3 - R
-            [0, 1, 0],  # Q4 - R
-            [0, 0, 1],  # Q5 - T
-            [0, 0, 1],  # Q6 - T
-            [1, 0, 0],  # Q7 - S
-            [0, 1, 0],  # Q8 - R
-            [0, 0, 1],  # Q9 - T
-            [1, 0, 0],  # Q10 - S
-            [0, 1, 0],  # Q11 - R
-            [0, 0, 1],  # Q12 - T
+            [1, 0, 0], [1, 0, 0],  # Q1–Q2: Sattva
+            [0, 1, 0], [0, 1, 0],  # Q3–Q4: Rajas
+            [0, 0, 1], [0, 0, 1],  # Q5–Q6: Tamas
+            [1, 0, 0],             # Q7: Sattva
+            [0, 1, 0],             # Q8: Rajas
+            [0, 0, 1],             # Q9: Tamas
+            [1, 0, 0],             # Q10: Sattva
+            [0, 1, 0],             # Q11: Rajas
+            [0, 0, 1],             # Q12: Tamas
         ])
 
         guna_scores = np.dot(guna_matrix.T, guna_responses).flatten()
         guna_labels = ['Sattva', 'Rajas', 'Tamas']
         guna_dict = dict(zip(guna_labels, guna_scores))
 
-        # Step 2: Music Preferences (boost relevant guna)
+        # 🎧 Music preference ratings (Q13–Q18)
         music_map = {
             "spiritual": 'Sattva',
             "high_energy": 'Rajas',
@@ -70,23 +59,37 @@ def result():
         }
 
         for idx, key in enumerate(music_map.keys(), start=13):
-            rating = int(request.form.get(f'q{idx}', 3))  # default neutral if missing
-            guna_dict[music_map[key]] += (rating - 3) * 0.5  # slight boost/reduce
+            rating = int(request.form.get(f'q{idx}', 3))  # Default = 3 (neutral)
+            guna_dict[music_map[key]] += (rating - 3) * 0.5
 
-        # Step 3: Find top 2 gunas
+        # 🔍 Get top 2 dominant gunas
         sorted_gunas = sorted(guna_dict.items(), key=lambda x: x[1], reverse=True)
         top_2 = sorted_gunas[:2]
-        guna_code = top_2[0][0][0] + top_2[1][0][0]  # e.g., SR
+        guna_code = top_2[0][0][0] + top_2[1][0][0]  # E.g., SR, ST, TR
 
-        song = recommendations.get(guna_code.upper(), recommendations['SS'])
-        traits = guna_traits.get(guna_code.upper(), "Unique state. Explore deeper.")
+        # 📁 Locate and load CSV from current file directory
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        csv_path = os.path.join(base_dir, 'music.csv')
+        df = pd.read_csv(csv_path, names=["Title", "Guna", "Type", "Link"])
+
+        # 🎯 Filter matching songs based on guna code and music type
+        matching_songs = df[(df["Guna"] == guna_code) & (df["Type"] != '')]
+
+        if not matching_songs.empty:
+            selected = matching_songs.sample(1).iloc[0]
+            song = {"title": selected["Title"], "url": selected["Link"]}
+        else:
+            song = {
+                "title": "Fallback Song – Default",
+                "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            }
 
         return render_template(
             'result.html',
-            guna_code=guna_code.upper(),
+            guna_code=guna_code,
             guna_scores=guna_dict,
             song=song,
-            traits=traits,
+            traits=guna_traits.get(guna_code, "Unique emotional state."),
             top_two=top_2
         )
 

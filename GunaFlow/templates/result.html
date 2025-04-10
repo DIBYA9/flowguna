@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Your Guna Music Recommendation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h2>🌟 Your Guna Combination: <span style="color:darkgreen;">{{ guna_code }}</span></h2>
+
+    <p><strong>Top Gunas:</strong></p>
+    <ul>
+        {% for guna, score in top_two %}
+            <li><strong>{{ guna }}</strong>: {{ score }}</li>
+        {% endfor %}
+    </ul>
+
+    <p><strong>Meaning of Your Guna State:</strong></p>
+    <p style="font-size: 1.1em;">{{ traits }}</p>
+
+    <hr>
+
+    <h3>🎵 Recommended Song for Your Mental State</h3>
+    <p><strong>{{ song.title }}</strong></p>
+    <iframe width="100%" height="315" src="{{ song.url }}" frameborder="0" allowfullscreen></iframe>
+
+    <br><br>
+    <a href="/">🔁 Take Test Again</a>
+</body>
+</html>

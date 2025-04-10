@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GunaFlow Assessment</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 30px;
+            background-color: #f0f8ff;
+        }
+        h2, h3 {
+            color: #2c3e50;
+        }
+        p {
+            font-size: 16px;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        input[type="submit"] {
+            font-size: 16px;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <h2>🎵 GunaFlow Assessment</h2>
+    <p>Answer the following questions honestly to receive a personalized music recommendation tailored to your mental and emotional state.</p>
+
+    <form method="POST" action="/result">
+
+        <!-- 🧠 Mental State Questions -->
+        <h3>PART 1: Mental & Emotional State</h3>
+        <p><em>(1 = Not at all, 5 = Exactly like me)</em></p>
+
+        <p>1. I feel calm, clear, and in control of my emotions.</p>
+        <input type="range" name="q1" min="1" max="5" required>
+
+        <p>2. I feel the urge to do something big or prove myself right now.</p>
+        <input type="range" name="q2" min="1" max="5" required>
+
+        <p>3. I feel tired, low-energy, or like avoiding everything.</p>
+        <input type="range" name="q3" min="1" max="5" required>
+
+        <p>4. I feel kind, understanding, and connected to others.</p>
+        <input type="range" name="q4" min="1" max="5" required>
+
+        <p>5. My thoughts are racing, and I want to achieve more.</p>
+        <input type="range" name="q5" min="1" max="5" required>
+
+        <p>6. I feel stuck, unmotivated, or mentally foggy.</p>
+        <input type="range" name="q6" min="1" max="5" required>
+
+        <p>7. I feel mentally peaceful and emotionally stable.</p>
+        <input type="range" name="q7" min="1" max="5" required>
+
+        <p>8. I feel driven to chase my goals aggressively.</p>
+        <input type="range" name="q8" min="1" max="5" required>
+
+        <p>9. I want to lie down, do nothing, or feel mentally drained.</p>
+        <input type="range" name="q9" min="1" max="5" required>
+
+        <p>10. I enjoy silence, reflection, and deep thought.</p>
+        <input type="range" name="q10" min="1" max="5" required>
+
+        <p>11. I feel like I’m in a hurry and must multitask.</p>
+        <input type="range" name="q11" min="1" max="5" required>
+
+        <p>12. I avoid responsibilities by procrastinating or overthinking.</p>
+        <input type="range" name="q12" min="1" max="5" required>
+
+        <!-- 🎶 Music Preferences -->
+        <h3>PART 2: Music Preferences</h3>
+        <p><em>(1 = I don’t like it, 5 = I love it)</em></p>
+
+        <p>13. I enjoy peaceful or spiritual songs like bhajans or soft soulful music.</p>
+        <input type="range" name="q15" min="1" max="5" required>
+
+        <p>14. I love high-energy songs like rap, dance beats, or fast Bollywood tracks.</p>
+        <input type="range" name="q16" min="1" max="5" required>
+
+        <p>15. I connect with emotional songs like romantic or heartbreak songs.</p>
+        <input type="range" name="q17" min="1" max="5" required>
+
+        <p>16. I prefer chill, relaxing music like lofi, instrumental, or nature sounds.</p>
+        <input type="range" name="q18" min="1" max="5" required>
+
+        <p>17. I enjoy traditional or folk music from my culture or region.</p>
+        <input type="range" name="q19" min="1" max="5" required>
+
+        <p>18. I enjoy rhythmic songs with drums or high tempo beats.</p>
+        <input type="range" name="q20" min="1" max="5" required>
+
+        <br><br>
+        <input type="submit" value="Get My Personalized Music 🎧">
+    </form>
+</body>
+</html>
