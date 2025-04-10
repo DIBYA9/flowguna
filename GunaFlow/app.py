@@ -93,8 +93,8 @@ def result():
             song = {"title": selected["Title"], "url": selected["Link"]}
         else:
             song = {
-                "title": "Fallback Song – Default",
-                "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                "title": "Raabta (Kehte Hain Khuda) – Agent Vinod",
+                "url": "https://www.youtube.com/watch?v=zlt38OOqwDc"
             }
 
         return render_template(
