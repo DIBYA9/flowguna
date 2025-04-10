@@ -1,12 +1,12 @@
 from flask import Flask, render_template, request
 import numpy as np
 import pandas as pd
-import random
 import os
+import random
 
 app = Flask(__name__)
 
-# 🧠 Traits for each guna combination
+# Traits of Guna Combinations
 guna_traits = {
     "SS": "High clarity and calm. Ideal for focus, meditation, and self-awareness.",
     "SR": "Peaceful and ambitious. You balance action with purpose.",
@@ -19,6 +19,13 @@ guna_traits = {
     "TT": "Low energy and static. Needs emotional ignition."
 }
 
+# Guna Distance Ranking
+guna_priority = {
+    "S": ["S", "R", "T"],
+    "R": ["R", "S", "T"],
+    "T": ["T", "R", "S"]
+}
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -26,29 +33,20 @@ def home():
 @app.route('/result', methods=['POST'])
 def result():
     try:
-        # ✅ Extract responses for guna calculation (Q1–Q12)
-        guna_responses = np.array([
-            int(request.form[f'q{i}']) for i in range(1, 13)
-        ]).reshape(12, 1)
+        # Guna calculation
+        guna_responses = np.array([int(request.form[f'q{i}']) for i in range(1, 13)]).reshape(12, 1)
 
-        # 🔢 Matrix to calculate Sattva, Rajas, Tamas scores
         guna_matrix = np.array([
-            [1, 0, 0], [1, 0, 0],  # Q1–Q2: Sattva
-            [0, 1, 0], [0, 1, 0],  # Q3–Q4: Rajas
-            [0, 0, 1], [0, 0, 1],  # Q5–Q6: Tamas
-            [1, 0, 0],             # Q7: Sattva
-            [0, 1, 0],             # Q8: Rajas
-            [0, 0, 1],             # Q9: Tamas
-            [1, 0, 0],             # Q10: Sattva
-            [0, 1, 0],             # Q11: Rajas
-            [0, 0, 1],             # Q12: Tamas
+            [1, 0, 0], [1, 0, 0], [0, 1, 0], [0, 1, 0],
+            [0, 0, 1], [0, 0, 1], [1, 0, 0], [0, 1, 0],
+            [0, 0, 1], [1, 0, 0], [0, 1, 0], [0, 0, 1],
         ])
 
         guna_scores = np.dot(guna_matrix.T, guna_responses).flatten()
         guna_labels = ['Sattva', 'Rajas', 'Tamas']
         guna_dict = dict(zip(guna_labels, guna_scores))
 
-        # 🎧 Music preference ratings (Q13–Q18)
+        # Music preference adjustment
         music_map = {
             "spiritual": 'Sattva',
             "high_energy": 'Rajas',
@@ -58,25 +56,40 @@ def result():
             "romantic": 'Tamas'
         }
 
+        preference_scores = {}
         for idx, key in enumerate(music_map.keys(), start=13):
-            rating = int(request.form.get(f'q{idx}', 3))  # Default = 3 (neutral)
+            rating = int(request.form.get(f'q{idx}', 3))
             guna_dict[music_map[key]] += (rating - 3) * 0.5
+            preference_scores[key] = rating
 
-        # 🔍 Get top 2 dominant gunas
+        # Sort guna and preference
         sorted_gunas = sorted(guna_dict.items(), key=lambda x: x[1], reverse=True)
         top_2 = sorted_gunas[:2]
-        guna_code = top_2[0][0][0] + top_2[1][0][0]  # E.g., SR, ST, TR
+        guna_code = top_2[0][0][0] + top_2[1][0][0]
 
-        # 📁 Locate and load CSV from current file directory
+        # Best music preference selected
+        best_preference = max(preference_scores, key=preference_scores.get)
+        best_pref_label = music_map[best_preference]
+
+        # Load songs
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        csv_path = os.path.join(base_dir, 'music.csv')
-        df = pd.read_csv(csv_path, names=["Title", "Guna", "Type", "Link"])
+        df = pd.read_csv(os.path.join(base_dir, "music.csv"), names=["Title", "Guna", "Type", "Link"])
 
-        # 🎯 Filter matching songs based on guna code and music type
-        matching_songs = df[(df["Guna"] == guna_code) & (df["Type"] != '')]
+        # Priority 1: Match both Guna & Preference
+        matched = df[(df["Guna"] == guna_code) & (df["Type"].str.lower() == best_preference.replace("_", " "))]
+        if matched.empty:
+            # Priority 2: Match same preference, close Guna
+            for alt_code in generate_alternative_gunas(guna_code):
+                matched = df[(df["Guna"] == alt_code) & (df["Type"].str.lower() == best_preference.replace("_", " "))]
+                if not matched.empty:
+                    break
 
-        if not matching_songs.empty:
-            selected = matching_songs.sample(1).iloc[0]
+        if matched.empty:
+            # Priority 3: Match Guna only
+            matched = df[df["Guna"] == guna_code]
+
+        if not matched.empty:
+            selected = matched.sample(1).iloc[0]
             song = {"title": selected["Title"], "url": selected["Link"]}
         else:
             song = {
@@ -95,6 +108,17 @@ def result():
 
     except Exception as e:
         return f"<h3>Something went wrong: {str(e)}</h3>"
+
+def generate_alternative_gunas(code):
+    # Generate similar guna codes in priority order
+    a, b = code[0], code[1]
+    alternates = []
+    for x in guna_priority[a]:
+        for y in guna_priority[b]:
+            combo = x + y
+            if combo != code:
+                alternates.append(combo)
+    return alternates
 
 if __name__ == '__main__':
     app.run(debug=True)
