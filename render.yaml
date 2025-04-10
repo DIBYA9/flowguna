@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: gunaflow-app
+    name: gunaflow
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
